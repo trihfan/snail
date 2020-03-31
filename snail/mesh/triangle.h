@@ -21,7 +21,7 @@ namespace snail
         /**
          * @brief Constructor with triangle indices and sides
          */
-        triangle(size_t a, size_t b, size_t c, ray<type> ab, ray<type> bc, ray<type> ac);
+        triangle(size_t a, size_t b, size_t c, const ray<type>& ab, const ray<type>& bc, const ray<type>& ca);
 
         /**
          * @brief Return the vertex index

@@ -42,6 +42,9 @@ namespace snail
             mesh->addTriangle(triangleToCut[1], triangleToCut[2], intersection);
             mesh->addTriangle(triangleToCut[2], triangleToCut[0], intersection);
             break;
+
+        default:
+            assert(false);
         }
     }
 }

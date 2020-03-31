@@ -19,8 +19,31 @@ template <typename type>
 mesh_t<type> mesh<type>::clone() const
 {
     auto clone = std::make_unique<mesh<type>>();
+
+    // Vertices
     clone->vertices = vertices;
-    clone->triangles = triangles;
+    for (const vector3<type>& vertex : clone->vertices)
+    {
+        clone->verticesMap[vertex] = vertex.getIndex();
+    }
+
+    // Triangles
+    clone->triangles.resize(triangles.size());
+    for (size_t i = 0; i < triangles.size(); i++)
+    {
+        size_t a = (*triangles[i])[0];
+        size_t b = (*triangles[i])[1];
+        size_t c = (*triangles[i])[2];
+
+        ray<type> ab(vertices[a], vertices[b]);
+        ray<type> bc(vertices[b], vertices[c]);
+        ray<type> ca(vertices[c], vertices[a]);
+
+        clone->triangles[i] = new triangle<type>(a, b, c, ab, bc, ca);
+        clone->triangles[i]->setIndex(i);
+        clone->triangles[i]->setId(clone->id);
+    }
+
     return clone;
 }
 
@@ -108,20 +131,26 @@ size_t mesh<type>::addTriangle(size_t a, size_t b, size_t c)
 // test
 #ifndef NDEBUG
     double avx = ab.getOrigin().x();
-    double bvx = bc.getOrigin().y();
-    double cvx = ca.getOrigin().z();
+    double bvx = bc.getOrigin().x();
+    double cvx = ca.getOrigin().x();
 
-    double avy = ab.getOrigin().x();
+    double avy = ab.getOrigin().y();
     double bvy = bc.getOrigin().y();
-    double cvy = ca.getOrigin().z();
+    double cvy = ca.getOrigin().y();
 
-    double avz = ab.getOrigin().x();
-    double bvz = bc.getOrigin().y();
+    double avz = ab.getOrigin().z();
+    double bvz = bc.getOrigin().z();
     double cvz = ca.getOrigin().z();
 
     double avv = abl;
     double bvv = bcl;
     double cvv = cal;
+
+    if (equalsV(vertices[a], vertices[b]) or equalsV(vertices[b], vertices[c]) or equalsV(vertices[c], vertices[a]))
+    {
+        assert(false);
+        return std::numeric_limits<size_t>::max();
+    }
 #endif
 
     if (area < epsilon<type>())
@@ -213,19 +242,14 @@ void mesh<type>::cutMesh(mesh<type>* other)
         // Fill work list
         if (work)
         {
-            for (triangle<type>* t : triangles)
+            for (mesh<type>* m : meshes)
             {
-                if (!t->hasFlag(triangle<type>::invalid))
+                for (triangle<type>* t : m->triangles)
                 {
-                    triangleToCut.push_back(t);
-                }
-            }
-
-            for (triangle<type>* t : other->triangles)
-            {
-                if (!t->hasFlag(triangle<type>::invalid))
-                {
-                    triangleToCut.push_back(t);
+                    if (!t->hasFlag(triangle<type>::invalid))
+                    {
+                        triangleToCut.push_back(t);
+                    }
                 }
             }
             work = false;
@@ -255,6 +279,7 @@ void mesh<type>::cutMesh(mesh<type>* other)
                 std::vector<typename triangleTriangleIntersection<type>::intersection> intersectionA;
                 std::vector<typename triangleTriangleIntersection<type>::intersection> intersectionB;
 
+
                 if (triangleTriangleIntersection<type>::intersects(*current, intersectionA, *otherTriangle, intersectionB))
                 {
                     bool cut1 = meshes[meshAIndex]->cutTriangle(current->getIndex(), intersectionA);
@@ -262,7 +287,7 @@ void mesh<type>::cutMesh(mesh<type>* other)
 
                     if (cut1 or cut2)
                     {
-                        numberOfSlices++;
+                        numberOfSlices += cut1 + cut2;
                         break;
                     }
                 }
@@ -272,23 +297,20 @@ void mesh<type>::cutMesh(mesh<type>* other)
         // Clean the mesh after last iteration
         work = currentNumberOfSlices != numberOfSlices;
 
-        for (int i = triangles.size() - 1; i >= 0; i--)
+        for (mesh<type>* m : meshes)
         {
-            if (triangles[i]->hasFlag(triangle<type>::invalid))
+            for (int i = m->triangles.size() - 1; i >= 0; i--)
             {
-                removeTriangle(i);
-            }
-        }
-
-        for (int i = other->triangles.size() - 1; i >= 0; i--)
-        {
-            if (other->triangles[i]->hasFlag(triangle<type>::invalid))
-            {
-                other->removeTriangle(i);
+                if (m->triangles[i]->hasFlag(triangle<type>::invalid))
+                {
+                    m->removeTriangle(i);
+                }
             }
         }
 
         numberOfIterations++;
+
+        //if (numberOfIterations >= 3) break;
     }
 
     std::cout << "Finish cutting after " << numberOfSlices << " cuts from " << numberOfIterations << " iterations" << std::endl;
@@ -352,7 +374,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
                 bool found = false;
                 for (const auto& intersection : intersections)
                 {
-                    if (equals(intersection, position))
+                    if (equalsV(intersection, position))
                     {
                         found = true;
                         break;
@@ -371,7 +393,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         bool onSamePlane = false;
         for (const auto& intersection : intersections)
         {
-            if (equals(intersection, center))
+            if (equalsV(intersection, center))
             {
                 onSamePlane = true;
                 break;
@@ -423,7 +445,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
 
             if (result == triangleRayIntersection<type>::inside)
             {
-                if (std::find_if(intersections.begin(), intersections.end(), [&position](const vector3<type>& inter) { return equals(inter, position); }) == intersections.end())
+                if (std::find_if(intersections.begin(), intersections.end(), [&position](const vector3<type>& inter) { return equalsV(inter, position); }) == intersections.end())
                 {
                     intersections.push_back(position);
                 }

@@ -33,6 +33,22 @@ namespace snail
 
         static void extractIntersections(const std::vector<intersection>& inputA, std::vector<intersection>& outputA,
                                          const std::vector<intersection>& inputB, std::vector<intersection>& outputB);
+
+        static bool notA(const intersection& inter)
+        {
+            return inter.u > ratioEpsilon<type>() or inter.v > ratioEpsilon<type>();
+        }
+
+        static bool notB(const intersection& inter)
+        {
+            return inter.u < (type(1) - ratioEpsilon<type>());
+        }
+
+        static bool notC(const intersection& inter)
+        {
+            return inter.v < (type(1) - ratioEpsilon<type>());
+        }
+
     };
 
     template <typename type>
@@ -54,44 +70,50 @@ namespace snail
         // Fill
         extractIntersections(fullA, intersectionA, fullB, intersectionB);
 
-        return true;
+        return !intersectionA.empty() or !intersectionB.empty();
     }
+
 
     template <typename type>
     void triangleTriangleIntersection<type>::extractIntersections(const std::vector<intersection>& inputA, std::vector<intersection>& outputA,
                                                                   const std::vector<intersection>& inputB, std::vector<intersection>& outputB)
     {
-        for (const auto& inter : inputA)
-        {
-            if (inter.hint <= ac)
-            {
-                outputA.push_back(inter);
-            }
-        }
+        outputA = inputA;
+        outputB = inputB;
 
-        for (const auto& inter : inputB)
+        for (const intersection& inter : inputB)
         {
-            if (inter.hint <= ac)
-            {
-                outputB.push_back(inter);
-            }
-        }
-
-        for (const auto& inter : inputB)
-        {
-            if (inter.u > epsilon<type>() and inter.v > epsilon<type>() and inter.u + inter.v < type(1) - epsilon<type>())
+            if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputA.begin(), outputA.end(), [&inter](const intersection& interA){ return equalsV(inter.position, interA.position, ratioEpsilon<type>()); }) == outputA.end())
             {
                 outputA.push_back(inter);
                 outputA.back().hint = inside;
             }
         }
 
-        for (const auto& inter : inputA)
+        for (const intersection& inter : inputA)
         {
-            if (inter.u > epsilon<type>() and inter.v > epsilon<type>() and inter.u + inter.v < type(1) - epsilon<type>())
+            if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputB.begin(), outputB.end(), [&inter](const intersection& interB){ return equalsV(inter.position, interB.position, ratioEpsilon<type>()); }) == outputB.end())
             {
                 outputB.push_back(inter);
                 outputB.back().hint = inside;
+            }
+        }
+
+        for (size_t i = 0; i < outputA.size(); i++)
+        {
+            if (outputA[i].hint > inside)
+            {
+                outputA.erase(outputA.begin() + i);
+                i--;
+            }
+        }
+
+        for (size_t i = 0; i < outputB.size(); i++)
+        {
+            if (outputB[i].hint > inside)
+            {
+                outputB.erase(outputB.begin() + i);
+                i--;
             }
         }
 
@@ -123,13 +145,15 @@ namespace snail
             {
                 intersectionHint hint;
                 type percent = t / triangleA.getSide(i).getLength();
-                if (percent < type(1e-3))
+                if (percent < ratioEpsilon<type>())
                 {
                     hint = static_cast<intersectionHint>(i + 4);
+                    assert(hint > inside);
                 }
-                else if (percent > type(1 - 1e-3))
+                else if (percent > type(1 - ratioEpsilon<type>()))
                 {
                     hint = static_cast<intersectionHint>(((i + 1) % 3) + 4);
+                    assert(hint > inside);
                 }
                 else
                 {

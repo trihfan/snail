@@ -22,7 +22,13 @@ namespace snail
     template <typename type>
     constexpr type epsilon()
     {
-        return std::numeric_limits<type>::epsilon() * 10;
+        return type(1e-12);
+    }
+
+    template <typename type>
+    constexpr type ratioEpsilon()
+    {
+        return type(1e-4);
     }
 
     // Trigo
@@ -60,15 +66,15 @@ namespace snail
 
     // Comparison
     template <typename type>
-    bool equals(type v1, type v2)
+    bool equals(const type& v1, const type& v2, const type& eps = epsilon<type>())
     {
-        return std::abs(v1 - v2) < snail::epsilon<type>();
+        return std::abs(v1 - v2) < eps;
     }
 
     template <typename type>
-    bool equals(const vector3<type>& v1, const vector3<type>& v2)
+    bool equalsV(const vector3<type>& v1, const vector3<type>& v2, const type& eps = epsilon<type>())
     {
-        return equals(v1.x(), v2.x()) and equals(v1.y(), v2.y()) and equals(v1.z(), v2.z());
+        return equals(v1.x(), v2.x(), eps) and equals(v1.y(), v2.y(), eps) and equals(v1.z(), v2.z(), eps);
     }
 
     template <typename type>

@@ -23,8 +23,8 @@ int main(int, char*[])
     std::cout << "Pre compute - vertices: " << mesh_1->getVertexCount() << ", triangles: " << mesh_1->getTriangleCount() << std::endl;
 
     // Difference
-    mesh_1->sub(mesh_2->clone());
-    //mesh_1->sub(mesh_3->clone());
+    //mesh_1->sub(mesh_2->clone());
+    mesh_1->sub(mesh_3->clone());
 
     std::cout << "Post compute - vertices: " << mesh_1->getVertexCount() << ", triangles: " << mesh_1->getTriangleCount() << std::endl;
 

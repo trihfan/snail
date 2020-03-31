@@ -46,7 +46,7 @@ namespace snail
         u = tvec.dot(pvec) * invDet;
 
         // Check u
-        if (u < -epsilon<type>() || u > type(1) + epsilon<type>())
+        if (u < -ratioEpsilon<type>() or u > type(1) + ratioEpsilon<type>())
         {
             return outside;
         }
@@ -56,7 +56,7 @@ namespace snail
         v = ray.getDirection().dot(qvec) * invDet;
 
         // Check v
-        if (v < -epsilon<type>() || u + v > type(1) + epsilon<type>())
+        if (v < -ratioEpsilon<type>() or u + v > type(1) + ratioEpsilon<type>())
         {
             return outside;
         }
@@ -65,7 +65,8 @@ namespace snail
         t = ac.dot(qvec) * invDet;
 
         // Check t
-        if (t < -epsilon<type>() || t > ray.getLength() + epsilon<type>())
+        type ratio = t / ray.getLength();
+        if (ratio < -ratioEpsilon<type>() or ratio > type(1) + ratioEpsilon<type>())
         {
             return outside;
         }

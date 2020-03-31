@@ -1,6 +1,6 @@
 template <typename type>
-triangle<type>::triangle(size_t a, size_t b, size_t c, ray<type> ab, ray<type> bc, ray<type> ac)
-    : indices({ a, b, c }), sides({ ab, bc, ac }), flags(0)
+triangle<type>::triangle(size_t a, size_t b, size_t c, const ray<type>& ab, const ray<type>& bc, const ray<type>& ca)
+    : indices({ a, b, c }), sides({ ab, bc, ca }), flags(0)
 {
 }
 
