@@ -1,6 +1,5 @@
 #include <chrono>
 #include <iostream>
-#include <mpfr.h>
 #include "application.h"
 #include "snail/snail.h"
 

@@ -9,5 +9,5 @@ add_library(snail INTERFACE)
 # target
 target_include_directories(snail INTERFACE ../)
 target_include_directories(snail INTERFACE ${GLM_INCLUDE_DIRS})
-target_link_libraries(snail INTERFACE Eigen3::Eigen)
+target_include_directories(snail INTERFACE ${EIGEN3_INCLUDE_DIR})
 target_compile_features(snail INTERFACE cxx_std_17)

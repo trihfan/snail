@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 set(version "1.0.0")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 project(snail VERSION ${version} LANGUAGES CXX)
 enable_testing()
 
@@ -8,7 +9,7 @@ enable_testing()
 set (CMAKE_CXX_STANDARD 17)
 
 # packages
-find_package(eigen3 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # custom variables
 set(top_binary_dir "${PROJECT_BINARY_DIR}")
