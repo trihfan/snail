@@ -52,6 +52,8 @@ namespace snail
         void setId(size_t id);
         size_t getId() const;
 
+        const type& getArea() const;
+
     private:
         /**
          * @brief The triangle indices
@@ -69,6 +71,7 @@ namespace snail
         int flags;
 
         size_t id;
+        type area;
     };
 
     #include "triangle.inl"

@@ -17,14 +17,14 @@ int main(int, char*[])
 
     // Create meshes
     auto mesh_1 = generate::box(vector3<double>(0., 0., 0.), vector3<double>(1., 1., 1.));
-    auto mesh_2 = generate::box(vector3<double>(0.25, 0.2, 0.2), vector3<double>(1., 1., 1.));
+    auto mesh_2 = generate::box(vector3<double>(0.25, 0.25, 0.25), vector3<double>(1., 1., 1.));
     auto mesh_3 = generate::sphere(vector3<double>(0.5, 0.5, 0.5), 0.6);
 
     std::cout << "Pre compute - vertices: " << mesh_1->getVertexCount() << ", triangles: " << mesh_1->getTriangleCount() << std::endl;
 
     // Difference
-    //mesh_1->sub(mesh_2->clone());
-    mesh_1->sub(mesh_3->clone());
+    mesh_1->sub(mesh_2->clone());
+    //mesh_1->sub(mesh_3->clone());
 
     std::cout << "Post compute - vertices: " << mesh_1->getVertexCount() << ", triangles: " << mesh_1->getTriangleCount() << std::endl;
 

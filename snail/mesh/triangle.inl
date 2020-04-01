@@ -2,6 +2,13 @@ template <typename type>
 triangle<type>::triangle(size_t a, size_t b, size_t c, const ray<type>& ab, const ray<type>& bc, const ray<type>& ca)
     : indices({ a, b, c }), sides({ ab, bc, ca }), flags(0)
 {
+    const type& abl = ab.getLength();
+    const type& bcl = bc.getLength();
+    const type& cal = ca.getLength();
+
+    const type s = (abl + bcl + cal) / type(2);
+    area = std::sqrt(s * (s - abl) * (s - bcl) * (s - cal));
+    assert(area > epsilon<type>());
 }
 
 template <typename type>
@@ -44,4 +51,10 @@ template <typename type>
 size_t triangle<type>::getId() const
 {
     return id;
+}
+
+template <typename type>
+const type& triangle<type>::getArea() const
+{
+    return area;
 }

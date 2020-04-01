@@ -120,16 +120,12 @@ size_t mesh<type>::addTriangle(size_t a, size_t b, size_t c)
     ray<type> bc(vertices[b], vertices[c]);
     ray<type> ca(vertices[c], vertices[a]);
 
-    // Check if the triangle is valid
+// test
+#ifndef NDEBUG
     const type& abl = ab.getLength();
     const type& bcl = bc.getLength();
     const type& cal = ca.getLength();
 
-    const type s = (abl + bcl + cal) / type(2);
-    const type area = std::sqrt(s * (s - abl) * (s - bcl) * (s - cal));
-
-// test
-#ifndef NDEBUG
     double avx = ab.getOrigin().x();
     double bvx = bc.getOrigin().x();
     double cvx = ca.getOrigin().x();
@@ -153,16 +149,18 @@ size_t mesh<type>::addTriangle(size_t a, size_t b, size_t c)
     }
 #endif
 
-    if (area < epsilon<type>())
+    triangle<type>* t = new triangle<type>(a, b, c, ab, bc, ca);
+
+    if (t->getArea() < epsilon<type>())
     {
-        assert(false);
+        delete t;
         return std::numeric_limits<size_t>::max();
     }
 
     size_t index = triangles.size();
-    triangles.push_back(new triangle<type>(a, b, c, ab, bc, ca));
-    triangles[index]->setIndex(index);
-    triangles[index]->setId(id);
+    triangles.push_back(t);
+    t->setIndex(index);
+    t->setId(id);
     return index;
 }
 
@@ -279,6 +277,17 @@ void mesh<type>::cutMesh(mesh<type>* other)
                 std::vector<typename triangleTriangleIntersection<type>::intersection> intersectionA;
                 std::vector<typename triangleTriangleIntersection<type>::intersection> intersectionB;
 
+                type ax = current->getSide(0).getOrigin().x();
+                type ay = current->getSide(0).getOrigin().y();
+                type az = current->getSide(0).getOrigin().z();
+
+                type bx = current->getSide(1).getOrigin().x();
+                type by = current->getSide(1).getOrigin().y();
+                type bz = current->getSide(1).getOrigin().z();
+
+                type cx = current->getSide(2).getOrigin().x();
+                type cy = current->getSide(2).getOrigin().y();
+                type cz = current->getSide(2).getOrigin().z();
 
                 if (triangleTriangleIntersection<type>::intersects(*current, intersectionA, *otherTriangle, intersectionB))
                 {
@@ -310,6 +319,19 @@ void mesh<type>::cutMesh(mesh<type>* other)
 
         numberOfIterations++;
 
+        for (mesh<type>* m : meshes)
+        {
+            for (triangle<type>* t : m->triangles)
+            {
+                const type& abl = t->getSide(0).getLength();
+                const type& bcl = t->getSide(1).getLength();
+                const type& cal = t->getSide(2).getLength();
+
+                const type s = (abl + bcl + cal) / type(2);
+                const type area = std::sqrt(s * (s - abl) * (s - bcl) * (s - cal));
+                assert(area > epsilon<type>());
+            }
+        }
         //if (numberOfIterations >= 3) break;
     }
 
@@ -360,7 +382,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         const auto& c = other->vertices[(*triangleA)[2]];
 
         vector3<type> center((a + b + c) / type(3));
-        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(2).getDirection()));
+        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(1).getDirection()));
         std::vector<vector3<type>> intersections;
 
         for (const auto* triangleB : oldTriangles)
@@ -390,34 +412,24 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
 
         // Resolve
         bool inside = intersections.size() % 2 == 1;
-        bool onSamePlane = false;
-        for (const auto& intersection : intersections)
-        {
-            if (equalsV(intersection, center))
-            {
-                onSamePlane = true;
-                break;
-            }
-        }
-
         switch (operation)
         {
         case addition:
-            if (!inside and !onSamePlane)
+            if (!inside)
             {
                 addTriangle(addVertex(a), addVertex(b), addVertex(c));
             }
             break;
 
         case difference:
-            if (inside and !onSamePlane)
+            if (inside)
             {
                 addTriangle(addVertex(c), addVertex(b), addVertex(a));
             }
             break;
 
         case intersection:
-            if (inside and !onSamePlane)
+            if (inside)
             {
                 addTriangle(addVertex(a), addVertex(b), addVertex(c));
             }
@@ -434,7 +446,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         const auto& c = oldVertices[(*triangleA)[2]];
 
         vector3<type> center((a + b + c) / type(3));
-        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(2).getDirection()));
+        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(1).getDirection()));
         std::vector<vector3<type>> intersections;
 
         for (const auto& triangleB : other->triangles)
@@ -483,4 +495,5 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
 template <typename type>
 void mesh<type>::refine()
 {
+
 }

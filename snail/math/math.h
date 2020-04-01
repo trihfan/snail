@@ -22,7 +22,7 @@ namespace snail
     template <typename type>
     constexpr type epsilon()
     {
-        return type(1e-12);
+        return type(1e-6);
     }
 
     template <typename type>
