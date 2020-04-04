@@ -29,8 +29,8 @@ namespace snail
         const ray<type>& ray, const vector3<type>& a, const vector3<type>& b, const vector3<type>& c, type& t, type& u, type& v)
     {
         vector3<type> ab = b - a;
-        vector3<type> ac = c - a;
-        vector3<type> pvec = ray.getDirection().cross(ac);
+        vector3<type> ca = c - a;
+        vector3<type> pvec = ray.getDirection().cross(ca);
         type det = ab.dot(pvec);
 
         // side and triangle are parallel if det is close to 0
@@ -62,7 +62,7 @@ namespace snail
         }
 
         // compute t
-        t = ac.dot(qvec) * invDet;
+        t = ca.dot(qvec) * invDet;
 
         // Check t
         type ratio = t / ray.getLength();
@@ -71,7 +71,10 @@ namespace snail
             return outside;
         }
 
-        assert(!std::isnan(t));
+        if (std::isnan(t))
+        {
+            log::err << "nan t";
+        }
         return inside;
     }
 }

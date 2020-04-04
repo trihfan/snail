@@ -14,12 +14,6 @@ namespace snail
          * @brief Cut a triangle with one intersections
          */
         static void cut(mesh<type>* mesh, const std::vector<intersection<type>>& intersections, const triangle<type>& triangleToCut);
-
-    private:
-        /**
-         * @brief Intersection hint used to classify a cut
-         */
-        using intersectionHint = typename triangleTriangleIntersection<type>::intersectionHint;
 	};
 
 

@@ -111,7 +111,7 @@ size_t mesh<type>::addTriangle(size_t a, size_t b, size_t c)
 {
     if (a == b or b == c or a == c)
     {
-        assert(false);
+        log::err << "add triangle with not 3 separates indices";
         return std::numeric_limits<size_t>::max();
     }
 
@@ -119,35 +119,6 @@ size_t mesh<type>::addTriangle(size_t a, size_t b, size_t c)
     ray<type> ab(vertices[a], vertices[b]);
     ray<type> bc(vertices[b], vertices[c]);
     ray<type> ca(vertices[c], vertices[a]);
-
-// test
-#ifndef NDEBUG
-    const type& abl = ab.getLength();
-    const type& bcl = bc.getLength();
-    const type& cal = ca.getLength();
-
-    double avx = ab.getOrigin().x();
-    double bvx = bc.getOrigin().x();
-    double cvx = ca.getOrigin().x();
-
-    double avy = ab.getOrigin().y();
-    double bvy = bc.getOrigin().y();
-    double cvy = ca.getOrigin().y();
-
-    double avz = ab.getOrigin().z();
-    double bvz = bc.getOrigin().z();
-    double cvz = ca.getOrigin().z();
-
-    double avv = abl;
-    double bvv = bcl;
-    double cvv = cal;
-
-    if (equalsV(vertices[a], vertices[b]) or equalsV(vertices[b], vertices[c]) or equalsV(vertices[c], vertices[a]))
-    {
-        assert(false);
-        return std::numeric_limits<size_t>::max();
-    }
-#endif
 
     triangle<type>* t = new triangle<type>(a, b, c, ab, bc, ca);
 
@@ -197,19 +168,19 @@ const triangle<type>& mesh<type>::getTriangle(size_t index) const
 template <typename type>
 void mesh<type>::add(mesh_t<type> mesh)
 {
-    compute(addition, std::move(mesh));
+    compute(booleanOperation::addition, std::move(mesh));
 }
 
 template <typename type>
 void mesh<type>::sub(mesh_t<type> mesh)
 {
-    compute(difference, std::move(mesh));
+    compute(booleanOperation::difference, std::move(mesh));
 }
 
 template <typename type>
 void mesh<type>::inter(mesh_t<type> mesh)
 {
-    compute(intersection, std::move(mesh));
+    compute(booleanOperation::intersection, std::move(mesh));
 }
 
 template <typename type>
@@ -274,25 +245,19 @@ void mesh<type>::cutMesh(mesh<type>* other)
                     continue;
                 }
 
-                std::vector<typename triangleTriangleIntersection<type>::intersection> intersectionA;
-                std::vector<typename triangleTriangleIntersection<type>::intersection> intersectionB;
-
-                type ax = current->getSide(0).getOrigin().x();
-                type ay = current->getSide(0).getOrigin().y();
-                type az = current->getSide(0).getOrigin().z();
-
-                type bx = current->getSide(1).getOrigin().x();
-                type by = current->getSide(1).getOrigin().y();
-                type bz = current->getSide(1).getOrigin().z();
-
-                type cx = current->getSide(2).getOrigin().x();
-                type cy = current->getSide(2).getOrigin().y();
-                type cz = current->getSide(2).getOrigin().z();
+                std::vector<intersection<type>> intersectionA;
+                std::vector<intersection<type>> intersectionB;
 
                 if (triangleTriangleIntersection<type>::intersects(*current, intersectionA, *otherTriangle, intersectionB))
                 {
+                    log::info << "START CUT";
+                    log::info << "triangle 1: " << *current;
+                    log::info << "triangle 2: " << *otherTriangle;
+
                     bool cut1 = meshes[meshAIndex]->cutTriangle(current->getIndex(), intersectionA);
                     bool cut2 = meshes[meshBIndex]->cutTriangle(otherTriangle->getIndex(), intersectionB);
+
+                    log::info << "END CUT" << std::endl;
 
                     if (cut1 or cut2)
                     {
@@ -319,27 +284,14 @@ void mesh<type>::cutMesh(mesh<type>* other)
 
         numberOfIterations++;
 
-        for (mesh<type>* m : meshes)
-        {
-            for (triangle<type>* t : m->triangles)
-            {
-                const type& abl = t->getSide(0).getLength();
-                const type& bcl = t->getSide(1).getLength();
-                const type& cal = t->getSide(2).getLength();
-
-                const type s = (abl + bcl + cal) / type(2);
-                const type area = std::sqrt(s * (s - abl) * (s - bcl) * (s - cal));
-                assert(area > epsilon<type>());
-            }
-        }
         //if (numberOfIterations >= 3) break;
     }
 
-    std::cout << "Finish cutting after " << numberOfSlices << " cuts from " << numberOfIterations << " iterations" << std::endl;
+    log::info << "Finish cutting after " << numberOfSlices << " cuts from " << numberOfIterations << " iterations";
 }
 
 template <typename type>
-bool mesh<type>::cutTriangle(size_t index, const std::vector<typename triangleTriangleIntersection<type>::intersection>& intersections)
+bool mesh<type>::cutTriangle(size_t index, const std::vector<intersection<type>>& intersections)
 {
     // Cut the triangle
     switch (intersections.size())
@@ -357,7 +309,7 @@ bool mesh<type>::cutTriangle(size_t index, const std::vector<typename triangleTr
     default:
         if (!intersections.empty())
         {
-            std::cout << "Bad classification, " << intersections.size() << " intersections" << std::endl;
+            log::err << "Bad classification, " << intersections.size() << " intersections";
             cut1<type>::cut(this, intersections, *triangles[index]);
             triangles[index]->setFlag(triangle<type>::invalid, true);
             return true;
@@ -414,21 +366,21 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         bool inside = intersections.size() % 2 == 1;
         switch (operation)
         {
-        case addition:
+        case booleanOperation::addition:
             if (!inside)
             {
                 addTriangle(addVertex(a), addVertex(b), addVertex(c));
             }
             break;
 
-        case difference:
+        case booleanOperation::difference:
             if (inside)
             {
                 addTriangle(addVertex(c), addVertex(b), addVertex(a));
             }
             break;
 
-        case intersection:
+        case booleanOperation::intersection:
             if (inside)
             {
                 addTriangle(addVertex(a), addVertex(b), addVertex(c));
@@ -468,21 +420,21 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         bool inside = intersections.size() % 2 == 1;
         switch (operation)
         {
-        case addition:
+        case booleanOperation::addition:
             if (!inside)
             {
                 addTriangle(addVertex(a), addVertex(b), addVertex(c));
             }
             break;
 
-        case difference:
+        case booleanOperation::difference:
             if (!inside)
             {
                 addTriangle(addVertex(c), addVertex(b), addVertex(a));
             }
             break;
 
-        case intersection:
+        case booleanOperation::intersection:
             if (inside)
             {
                 addTriangle(addVertex(a), addVertex(b), addVertex(c));

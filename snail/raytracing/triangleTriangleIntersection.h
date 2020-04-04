@@ -6,59 +6,60 @@
 
 namespace snail
 {
+    /**
+     * @brief Hint to classify the intersection
+     */
+    enum intersectionHint : int { ab, bc, ac, inside, a, b, c };
+
+    /**
+     * @brief An intersection returned by the intersects method
+     */
+    template <typename type>
+    struct intersection
+    {
+        intersectionHint hint;
+        vector3<type> position;
+        type t, u, v;
+    };
+
     template <typename type>
     class triangleTriangleIntersection
     {
     public:
-        /**
-         * @brief Hint to classify the intersection
-         */
-        enum intersectionHint : int { ab, bc, ac, inside, a, b, c };
-
-        /**
-         * @brief An intersection returned by the intersects method
-         */
-        struct intersection
-        {
-            intersectionHint hint;
-            vector3<type> position;
-            type t, u, v;
-        };
-
-        static bool intersects(const triangle<type>& triangleA, std::vector<intersection>& intersectionA,
-                               const triangle<type>& triangleB, std::vector<intersection>& intersectionB);
+        static bool intersects(const triangle<type>& triangleA, std::vector<intersection<type>>& intersectionA,
+                               const triangle<type>& triangleB, std::vector<intersection<type>>& intersectionB);
 
     private:
-        static bool intersects(const triangle<type>& triangleA, const triangle<type>& triangleB, std::vector<intersection>& intersections);
+        static bool intersects(const triangle<type>& triangleA, const triangle<type>& triangleB, std::vector<intersection<type>>& intersections);
 
-        static void extractIntersections(const std::vector<intersection>& inputA, std::vector<intersection>& outputA,
-                                         const std::vector<intersection>& inputB, std::vector<intersection>& outputB);
+        static void extractIntersections(const std::vector<intersection<type>>& inputA, std::vector<intersection<type>>& outputA,
+                                         const std::vector<intersection<type>>& inputB, std::vector<intersection<type>>& outputB);
 
-        static bool notA(const intersection& inter)
+        static bool notA(const intersection<type>& inter)
         {
             return inter.u > ratioEpsilon<type>() or inter.v > ratioEpsilon<type>();
         }
 
-        static bool notB(const intersection& inter)
+        static bool notB(const intersection<type>& inter)
         {
             return inter.u < (type(1) - ratioEpsilon<type>());
         }
 
-        static bool notC(const intersection& inter)
+        static bool notC(const intersection<type>& inter)
         {
             return inter.v < (type(1) - ratioEpsilon<type>());
         }
-
     };
 
     template <typename type>
-    using intersection = typename triangleTriangleIntersection<type>::intersection;
-
-    template <typename type>
-    bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triangleA, std::vector<intersection>& intersectionA,
-                                                        const triangle<type>& triangleB, std::vector<intersection>& intersectionB)
+    bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triangleA, std::vector<intersection<type>>& intersectionA,
+                                                        const triangle<type>& triangleB, std::vector<intersection<type>>& intersectionB)
     {
-        std::vector<intersection> fullA, fullB;
+        log::info << "TRIANGLE INTERSECTION START";
+        log::info << triangleA;
+        log::info << triangleB;
+
+        std::vector<intersection<type>> fullA, fullB;
 
         // Compute intersections
         if (!intersects(triangleA, triangleB, fullA))
@@ -70,32 +71,68 @@ namespace snail
         // Fill
         extractIntersections(fullA, intersectionA, fullB, intersectionB);
 
+        log::info << "TRIANGLE INTERSECTION END" << std::endl;
         return !intersectionA.empty() or !intersectionB.empty();
     }
 
-
     template <typename type>
-    void triangleTriangleIntersection<type>::extractIntersections(const std::vector<intersection>& inputA, std::vector<intersection>& outputA,
-                                                                  const std::vector<intersection>& inputB, std::vector<intersection>& outputB)
+    void triangleTriangleIntersection<type>::extractIntersections(const std::vector<intersection<type>>& inputA, std::vector<intersection<type>>& outputA,
+                                                                  const std::vector<intersection<type>>& inputB, std::vector<intersection<type>>& outputB)
     {
         outputA = inputA;
         outputB = inputB;
 
-        for (const intersection& inter : inputB)
+        for (const intersection<type>& inter : inputB)
         {
-            if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputA.begin(), outputA.end(), [&inter](const intersection& interA){ return equalsV(inter.position, interA.position, ratioEpsilon<type>()); }) == outputA.end())
+            if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputA.begin(), outputA.end(), [&inter](const intersection<type>& interA){ return equalsV(inter.position, interA.position, ratioEpsilon<type>()); }) == outputA.end())
             {
                 outputA.push_back(inter);
-                outputA.back().hint = inside;
+                bool uEquals0 = equals(inter.u, type(0));
+                bool vEquals0 = equals(inter.v, type(0));
+
+                if (uEquals0 and !vEquals0)
+                {
+                    outputA.back().hint = ab;
+                }
+                else if (!uEquals0 and vEquals0)
+                {
+                    outputA.back().hint = ac;
+                }
+                else if (equals(inter.u + inter.v, type(1)))
+                {
+                    outputA.back().hint = bc;
+                }
+                else
+                {
+                    outputA.back().hint = inside;
+                }
             }
         }
 
-        for (const intersection& inter : inputA)
+        for (const intersection<type>& inter : inputA)
         {
-            if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputB.begin(), outputB.end(), [&inter](const intersection& interB){ return equalsV(inter.position, interB.position, ratioEpsilon<type>()); }) == outputB.end())
+            if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputB.begin(), outputB.end(), [&inter](const intersection<type>& interB){ return equalsV(inter.position, interB.position, ratioEpsilon<type>()); }) == outputB.end())
             {
                 outputB.push_back(inter);
-                outputB.back().hint = inside;
+                bool uEquals0 = equals(inter.u, type(0));
+                bool vEquals0 = equals(inter.v, type(0));
+
+                if (uEquals0 and !vEquals0)
+                {
+                    outputB.back().hint = ab;
+                }
+                else if (!uEquals0 and vEquals0)
+                {
+                    outputB.back().hint = ac;
+                }
+                else if (equals(inter.u + inter.v, type(1)))
+                {
+                    outputB.back().hint = bc;
+                }
+                else
+                {
+                    outputB.back().hint = inside;
+                }
             }
         }
 
@@ -117,12 +154,22 @@ namespace snail
             }
         }
 
-        assert(outputA.size() < 3);
-        assert(outputB.size() < 3);
+        if (outputA.size() > 3 or outputB.size() > 3)
+        {
+            log::err << "more than 2 intersections";
+        }
+
+        if (!outputA.empty() and !outputB.empty())
+        {
+            log::info << "Input A: " << inputA;
+            log::info << "Input B: " << inputB;
+            log::info << "Output A: " << outputA;
+            log::info << "Output B: " << outputB;
+        }
     }
 
     template <typename type>
-    bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triangleA, const triangle<type>& triangleB, std::vector<intersection>& intersections)
+    bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triangleA, const triangle<type>& triangleB, std::vector<intersection<type>>& intersections)
     {
         size_t nbParallels = 0;
 
@@ -131,6 +178,7 @@ namespace snail
         {
             type t, u, v;
             auto result = triangleRayIntersection<type>::intersects(triangleA.getSide(i), triangleB.getSide(0).getOrigin(), triangleB.getSide(1).getOrigin(), triangleB.getSide(2).getOrigin(), t, u, v);
+            log::info << "intersects: r=" << result << ", u=" << u << ", v=" << v << ", t=" << t;
 
             // Check the intersection result
             if (result == triangleRayIntersection<type>::parallels)
@@ -148,12 +196,10 @@ namespace snail
                 if (percent < ratioEpsilon<type>())
                 {
                     hint = static_cast<intersectionHint>(i + 4);
-                    assert(hint > inside);
                 }
                 else if (percent > type(1 - ratioEpsilon<type>()))
                 {
                     hint = static_cast<intersectionHint>(((i + 1) % 3) + 4);
-                    assert(hint > inside);
                 }
                 else
                 {
@@ -161,6 +207,7 @@ namespace snail
                 }
 
                 auto vertex = triangleA.getSide(i).getOrigin() + triangleA.getSide(i).getDirection() * type(t);
+                log::info << "origin=" << triangleA.getSide(i).getOrigin() << ", unit=" << triangleA.getSide(i).getDirection() << ", t=" << t << ", l=" << triangleA.getSide(i).getLength();
                 intersections.push_back({ hint, vertex, t, u, v });
             }
         }

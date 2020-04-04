@@ -49,7 +49,7 @@ namespace snail
         /**
          * @brief Enumeration of boolean operations
          */
-        enum booleanOperation { difference, addition, intersection };
+        enum  class booleanOperation { difference, addition, intersection };
 
         /**
          * @brief Array of the mesh vertices
@@ -69,7 +69,7 @@ namespace snail
         void compute(booleanOperation operation, mesh_t<type> other);
 
         void cutMesh(mesh<type>* other);
-        bool cutTriangle(size_t index, const std::vector<typename triangleTriangleIntersection<type>::intersection>& intersections);
+        bool cutTriangle(size_t index, const std::vector<intersection<type>>& intersections);
 
         void mergeMesh(booleanOperation operation, mesh<type>* other);
 

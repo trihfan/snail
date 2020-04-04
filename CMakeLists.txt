@@ -11,6 +11,13 @@ set (CMAKE_CXX_STANDARD 17)
 # packages
 find_package(Eigen3 REQUIRED)
 
+# options
+option(snail_verbose "" true)
+
+if (${snail_verbose})
+    add_definitions(-DVERBOSITY_LEVEL_0)
+endif()
+
 # custom variables
 set(top_binary_dir "${PROJECT_BINARY_DIR}")
 set(snail_path "${PROJECT_SOURCE_DIR}/snail")

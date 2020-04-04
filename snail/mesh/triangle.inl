@@ -8,7 +8,12 @@ triangle<type>::triangle(size_t a, size_t b, size_t c, const ray<type>& ab, cons
 
     const type s = (abl + bcl + cal) / type(2);
     area = std::sqrt(s * (s - abl) * (s - bcl) * (s - cal));
-    assert(area > epsilon<type>());
+
+    log::info << "New triangle: " << *this;
+    if (area < epsilon<type>())
+    {
+        log::err << "triangle area is null";
+    }
 }
 
 template <typename type>

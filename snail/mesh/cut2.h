@@ -17,11 +17,6 @@ namespace snail
 
     private:
         /**
-         * @brief Intersection hint used to classify a cut
-         */
-        using intersectionHint = typename triangleTriangleIntersection<type>::intersectionHint;
-
-        /**
          * @brief Cut a triangle with two intersections inside the triangle
          */
         static void cutInsideInside(mesh<type>* mesh, const std::vector<intersection<type>>& intersections, const triangle<type>& triangleToCut);

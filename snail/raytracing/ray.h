@@ -21,6 +21,7 @@ namespace snail
             vector3<type> raySegment = rayEnd - rayOrigin;
             rayLength = raySegment.norm();
             rayDirection = raySegment / rayLength;
+            assert(equals(rayDirection.norm(), type(1)));
         }
 
         const vector3<type>& getOrigin() const

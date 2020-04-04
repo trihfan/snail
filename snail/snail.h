@@ -12,9 +12,13 @@ namespace snail
 
     template <typename type>
     class ray;
+
+    template <typename type>
+    struct intersection;
 }
 
 #include <iostream>
+#include <iomanip>
 #include <array>
 #include <vector>
 #include <list>
@@ -25,6 +29,9 @@ namespace snail
 #include <memory>
 
 #include "vector3.h"
+#include "log.h"
+#include "hash.h"
+#include "output.h"
 #include "math/math.h"
 
 #include "raytracing/ray.h"
