@@ -15,6 +15,9 @@ namespace snail
     template <typename type>
     std::ostream& operator<<(std::ostream& out, const intersection<type>& inter);
 
+    template <typename type>
+    std::ostream& operator<<(std::ostream& out, const ray<type>& r);
+
     // all
     template <typename type>
     std::ostream& operator<<(std::ostream& out, const std::vector<type>& v);

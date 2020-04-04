@@ -15,34 +15,15 @@ namespace snail
         /**
          * @brief Constructor of a ray from origin to end
          */
-        ray(const vector3<type>& origin, const vector3<type>& end)
-            : rayOrigin(origin), rayEnd(end)
-        {
-            vector3<type> raySegment = rayEnd - rayOrigin;
-            rayLength = raySegment.norm();
-            rayDirection = raySegment / rayLength;
-            assert(equals(rayDirection.norm(), type(1)));
-        }
+        ray(const vector3<type>& origin, const vector3<type>& end);
 
-        const vector3<type>& getOrigin() const
-        {
-            return rayOrigin;
-        }
+        const vector3<type>& getOrigin() const;
 
-        const vector3<type>& getEnd() const
-        {
-            return rayEnd;
-        }
+        const vector3<type>& getEnd() const;
 
-        const vector3<type>& getDirection() const
-        {
-            return rayDirection;
-        }
+        const vector3<type>& getDirection() const;
 
-        type getLength() const
-        {
-            return rayLength;
-        }
+        type getLength() const;
 
     private:
         /**
@@ -65,5 +46,7 @@ namespace snail
          */
         type rayLength;
     };
+
+    #include "ray.inl"
 }
 

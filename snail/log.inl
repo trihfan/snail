@@ -9,6 +9,12 @@ public:
     }
 };
 
+enum outputColor : int
+{
+    red, green, yellow, defaultColor
+};
+
+// std::cout manipulators
 typedef std::basic_ostream<char, std::char_traits<char>> coutType;
 typedef coutType& (*coutManipulator)(coutType&);
 
@@ -20,6 +26,10 @@ inline std::unique_ptr<logEnd> operator<<(std::unique_ptr<logEnd> l, coutManipul
     return std::move(l);
 }
 
+// set color
+
+
+// info
 template<typename type>
 inline std::unique_ptr<logEnd> operator<<(infoStart& info, const type& value)
 {
@@ -29,24 +39,27 @@ inline std::unique_ptr<logEnd> operator<<(infoStart& info, const type& value)
     return std::make_unique<logEnd>();
 }
 
+// warn
 template<typename type>
 inline std::unique_ptr<logEnd> operator<<(warnStart& warning, const type& value)
 {
 #ifdef VERBOSITY_LEVEL_0
-    std::cout << warning.getColor() << warning.getHeader() << value << COUT_DEFAULT;
+    std::cout << COUT_YELLOW << warning.getHeader() << value << COUT_DEFAULT;
 #endif
     return std::make_unique<logEnd>();
 }
 
+// err
 template<typename type>
 inline std::unique_ptr<logEnd> operator<<(errStart& error, const type& value)
 {
 #ifdef VERBOSITY_LEVEL_0
-    std::cout << error.getColor() << error.getHeader() << value << COUT_DEFAULT;
+    std::cout << COUT_RED << error.getHeader() << value << COUT_DEFAULT;
 #endif
     return std::make_unique<logEnd>();
 }
 
+// default
 template<typename type>
 inline std::unique_ptr<logEnd> operator<<(std::unique_ptr<logEnd> l, const type& value)
 {
