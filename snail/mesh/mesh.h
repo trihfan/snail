@@ -7,7 +7,7 @@
 namespace snail
 {
     template <typename type>
-    using mesh_t = std::unique_ptr<mesh<type>>;
+    inline size_t currentMeshIndex = 0;
 
     template <typename type>
     class mesh
@@ -24,7 +24,7 @@ namespace snail
         /**
          * @brief Return a clone of the current mesh
          */
-        mesh_t<type> clone() const;
+        mesh<type>* clone() const;
 
         // vertex
         size_t addVertex(const vector3<type>& vertex);
@@ -35,15 +35,23 @@ namespace snail
 
         // triangle
         size_t addTriangle(size_t a, size_t b, size_t c);
+        size_t addTriangle(const vector3<type>& a, const vector3<type>& b, const vector3<type>& c);
         void removeTriangle(const triangle<type>& triangle);
         void removeTriangle(size_t index);
         size_t getTriangleCount() const;
         const triangle<type>& getTriangle(size_t index) const;
 
         // boolean operations
-        void add(mesh_t<type> mesh);
-        void sub(mesh_t<type> mesh);
-        void inter(mesh_t<type> mesh);
+        void add(const mesh<type>* mesh);
+        void add(std::unique_ptr<mesh<type>> mesh);
+
+        void sub(const mesh<type>* mesh);
+        void sub(std::unique_ptr<mesh<type>> mesh);
+
+        void inter(const mesh<type>* mesh);
+        void inter(std::unique_ptr<mesh<type>> mesh);
+
+        static mesh<type>* parse(nlohmann::json& j);
 
 	private:
         /**
@@ -66,7 +74,7 @@ namespace snail
          */
         std::vector<triangle<type>*> triangles;
 
-        void compute(booleanOperation operation, mesh_t<type> other);
+        void compute(booleanOperation operation, std::unique_ptr<mesh<type>> other);
 
         void cutMesh(mesh<type>* other);
         bool cutTriangle(size_t index, const std::vector<intersection<type>>& intersections);
@@ -75,12 +83,11 @@ namespace snail
 
         void refine();
 
-        static size_t sCurrentIndex;
         size_t id;
 	};
 
-    template <typename type>
-    size_t mesh<type>::sCurrentIndex = 0;
+
 
     #include "mesh.inl"
+    #include "meshSerialize.inl"
 }

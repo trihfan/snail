@@ -66,7 +66,7 @@ bool application::create_window()
     m_window = glfwCreateWindow(m_current_width, m_current_height, "snail - viewer", nullptr, nullptr);
     if (!m_window)
     {
-        log::err << "unable to create opengl context" << std::endl;
+        log(err) << "unable to create opengl context" << std::endl;
         return false;
     }
 

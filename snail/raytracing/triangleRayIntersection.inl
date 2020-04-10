@@ -47,7 +47,7 @@ typename triangleRayIntersection<type>::intersectionHint triangleRayIntersection
 
     if (std::isnan(t))
     {
-        log::err << "nan t";
+        log(err) << "nan t";
     }
     return inside;
 }

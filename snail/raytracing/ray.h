@@ -48,5 +48,6 @@ namespace snail
     };
 
     #include "ray.inl"
+    #include "raySerialize.inl"
 }
 

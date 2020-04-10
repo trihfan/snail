@@ -75,4 +75,5 @@ namespace snail
     };
 
     #include "triangle.inl"
+    #include "triangleSerialize.inl"
 }

@@ -1,10 +1,10 @@
 template <typename type>
-mesh_t<type> generate::box(const vector3<type>& position, const vector3<type>& size)
+mesh<type>* generate::box(const vector3<type>& position, const vector3<type>& size)
 {
     vector3<type> halfSize = size / type(2);
 
     // vertices
-    mesh_t<type> box = std::make_unique<mesh<type>>(8);
+    auto box = new mesh<type>(8);
     box->addVertex(position + vector3<type>(-halfSize.x(), -halfSize.y(), -halfSize.z()));
     box->addVertex(position + vector3<type>( halfSize.x(), -halfSize.y(), -halfSize.z()));
     box->addVertex(position + vector3<type>( halfSize.x(),  halfSize.y(), -halfSize.z()));
@@ -32,9 +32,9 @@ mesh_t<type> generate::box(const vector3<type>& position, const vector3<type>& s
 }
 
 template <typename type>
-mesh_t<type> generate::sphere(const vector3<type>& position, type radius, size_t u, size_t v)
+mesh<type>* generate::sphere(const vector3<type>& position, type radius, size_t u, size_t v)
 {
-    mesh_t<type> sphere = std::make_unique<mesh<type>>(u * v);
+    auto sphere = new mesh<type>(u * v);
 
     type sectorStep = 2 * pi<type>() / v;
     type stackStep = pi<type>() / u;
@@ -42,7 +42,7 @@ mesh_t<type> generate::sphere(const vector3<type>& position, type radius, size_t
 
     for (int i = 0; i <= u; ++i)
     {
-        stackAngle = pi<type>() / 2 - i * stackStep;        // starting from pi/2 to -pi/2
+        stackAngle = pi<type>() / 2 - i * stackStep;     // starting from pi/2 to -pi/2
         type xy = radius * cosf(stackAngle);             // r * cos(u)
         type z = radius * sinf(stackAngle);              // r * sin(u)
 
@@ -90,13 +90,13 @@ mesh_t<type> generate::sphere(const vector3<type>& position, type radius, size_t
 }
 
 template <typename type>
-mesh_t<type> generate::pyramid(const vector3<type>& position, type height, type length)
+mesh<type>* generate::pyramid(const vector3<type>& position, type height, type length)
 {
     type halfLength = length / type(2);
     type halfHeight = height / type(2);
 
     // vertices
-    mesh_t<type> pyramid = std::make_unique<mesh<type>>(5);
+    auto pyramid = new mesh<type>(5);
     pyramid->addVertex(position + vector3<type>(-halfLength, -halfLength, -halfHeight));
     pyramid->addVertex(position + vector3<type>( halfLength, -halfLength, -halfHeight));
     pyramid->addVertex(position + vector3<type>( halfLength,  halfLength, -halfHeight));
@@ -115,9 +115,9 @@ mesh_t<type> generate::pyramid(const vector3<type>& position, type height, type 
 }
 
 template <typename type>
-mesh_t<type> generate::tetrahedron(const vector3<type>& position, type height, type length)
+mesh<type>* generate::tetrahedron(const vector3<type>& position, type height, type length)
 {
-    mesh_t<type> tetrahedron = std::make_unique<mesh<type>>(4);
+    auto tetrahedron = new mesh<type>(4);
 
     return tetrahedron;
 }

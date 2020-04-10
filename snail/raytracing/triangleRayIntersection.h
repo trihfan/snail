@@ -25,4 +25,5 @@ namespace snail
     };
 
     #include "triangleRayIntersection.inl"
+    #include "triangleRayIntersectionSerialize.inl"
 }

@@ -52,4 +52,5 @@ namespace snail
     };
 
     #include "triangleTriangleIntersection.inl"
+    #include "triangleTriangleIntersectionSerialize.inl"
 }

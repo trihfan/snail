@@ -1,7 +1,8 @@
 /*
- *
+ * Main header of snail library
  */
 
+// declaration
 namespace snail
 {
     template <typename type>
@@ -17,6 +18,7 @@ namespace snail
     struct intersection;
 }
 
+// std
 #include <iostream>
 #include <iomanip>
 #include <array>
@@ -27,17 +29,36 @@ namespace snail
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <fstream>
+#include <string_view>
+#include <type_traits>
+#include <typeinfo>
+#include <filesystem>
 
-#include "vector3.h"
-#include "log.h"
-#include "hash.h"
-#include "output.h"
+// external
+#ifdef SNAIL_JSON
+    #include <nlohmann/json.hpp>
+#endif
+
+#ifdef SNAIL_CHAI
+    #include <chaiscript/chaiscript.hpp>
+#endif
+
+// utils
+#include "utils/serialize.h"
+#include "utils/log.h"
+#include "utils/hash.h"
+
+// math
+#include "math/vector3.h"
 #include "math/math.h"
 
+// raytracing
 #include "raytracing/ray.h"
 #include "raytracing/triangleRayIntersection.h"
 #include "raytracing/triangleTriangleIntersection.h"
 
+// mesh
 #include "mesh/cut1.h"
 #include "mesh/cut2.h"
 #include "mesh/indexable.h"
@@ -45,4 +66,8 @@ namespace snail
 #include "mesh/mesh.h"
 #include "mesh/generate.h"
 
+// chai
+#ifdef SNAIL_CHAI
+    #include "chai.h"
+#endif
 #pragma once

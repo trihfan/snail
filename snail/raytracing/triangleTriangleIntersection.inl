@@ -2,9 +2,9 @@ template <typename type>
 bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triangleA, std::vector<intersection<type>>& intersectionA,
                                                     const triangle<type>& triangleB, std::vector<intersection<type>>& intersectionB)
 {
-    log::info << "TRIANGLE INTERSECTION START";
-    log::info << "triangle 1: " << triangleA;
-    log::info << "triangle 2: " << triangleB;
+    log(debug) << "TRIANGLE INTERSECTION START";
+    log(debug) << "triangle 1: " << triangleA;
+    log(debug) << "triangle 2: " << triangleB;
 
     std::vector<intersection<type>> fullA, fullB;
 
@@ -18,7 +18,7 @@ bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triang
     // Fill
     extractIntersections(fullA, intersectionA, fullB, intersectionB);
 
-    log::info << "TRIANGLE INTERSECTION END" << std::endl;
+    log(debug) << "TRIANGLE INTERSECTION END" << std::endl;
     return !intersectionA.empty() or !intersectionB.empty();
 }
 
@@ -103,15 +103,15 @@ void triangleTriangleIntersection<type>::extractIntersections(const std::vector<
 
     if (outputA.size() > 3 or outputB.size() > 3)
     {
-        log::err << "more than 2 intersections";
+        log(err) << "more than 2 intersections";
     }
 
     if (!outputA.empty() and !outputB.empty())
     {
-        log::info << "Input A: " << inputA;
-        log::info << "Input B: " << inputB;
-        log::info << "Output A: " << outputA;
-        log::info << "Output B: " << outputB;
+        log(debug) << "Input A: " << inputA;
+        log(debug) << "Input B: " << inputB;
+        log(debug) << "Output A: " << outputA;
+        log(debug) << "Output B: " << outputB;
     }
 }
 
@@ -126,7 +126,7 @@ bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triang
         type t, u, v;
         auto result = triangleRayIntersection<type>::intersects(triangleA.getSide(i), triangleB.getSide(0).getOrigin(), triangleB.getSide(1).getOrigin(), triangleB.getSide(2).getOrigin(), t, u, v);
         static const std::array<std::string, 3> resultToStr { "parallels", "outside", "inside" };
-        log::info << "intersects: r=" << resultToStr[result] << ", u=" << u << ", v=" << v << ", t=" << t;
+        log(debug) << "intersects: r=" << resultToStr[result] << ", u=" << u << ", v=" << v << ", t=" << t;
 
         // Check the intersection result
         if (result == triangleRayIntersection<type>::parallels)
@@ -155,7 +155,7 @@ bool triangleTriangleIntersection<type>::intersects(const triangle<type>& triang
             }
 
             auto vertex = triangleA.getSide(i).getOrigin() + triangleA.getSide(i).getDirection() * type(t);
-            log::info << "origin=" << triangleA.getSide(i).getOrigin() << ", unit=" << triangleA.getSide(i).getDirection() << ", t=" << t << ", l=" << triangleA.getSide(i).getLength();
+            log(debug) << "origin=" << triangleA.getSide(i).getOrigin() << ", unit=" << triangleA.getSide(i).getDirection() << ", t=" << t << ", l=" << triangleA.getSide(i).getLength();
             intersections.push_back({ hint, vertex, t, u, v });
         }
     }

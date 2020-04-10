@@ -83,7 +83,7 @@ void renderer::initPrivate(int width, int height)
 void renderer::render(camera& camera)
 {
     // Setup state
-    glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glLineWidth(3.f);

@@ -1,6 +1,6 @@
 template <typename type>
 mesh<type>::mesh(size_t reserveSize)
-    : id(sCurrentIndex++)
+    : id(currentMeshIndex<type>++)
 {
     vertices.reserve(reserveSize);
     triangles.reserve(reserveSize / 3);
@@ -16,9 +16,9 @@ mesh<type>::~mesh()
 }
 
 template <typename type>
-mesh_t<type> mesh<type>::clone() const
+mesh<type>* mesh<type>::clone() const
 {
-    auto clone = std::make_unique<mesh<type>>();
+    auto clone = new mesh<type>();
 
     // Vertices
     clone->vertices = vertices;
@@ -105,13 +105,12 @@ const vector3<type>& mesh<type>::getVertex(size_t index) const
     return vertices[index];
 }
 
-
 template <typename type>
 size_t mesh<type>::addTriangle(size_t a, size_t b, size_t c)
 {
     if (a == b or b == c or a == c)
     {
-        log::err << "add triangle with not 3 separates indices";
+        log(err) << "add triangle with not 3 separates indices";
         return std::numeric_limits<size_t>::max();
     }
 
@@ -133,6 +132,12 @@ size_t mesh<type>::addTriangle(size_t a, size_t b, size_t c)
     t->setIndex(index);
     t->setId(id);
     return index;
+}
+
+template <typename type>
+size_t mesh<type>::addTriangle(const vector3<type>& a, const vector3<type>& b, const vector3<type>& c)
+{
+    return addTriangle(addVertex(a), addVertex(b), addVertex(c));
 }
 
 template <typename type>
@@ -166,25 +171,43 @@ const triangle<type>& mesh<type>::getTriangle(size_t index) const
 }
 
 template <typename type>
-void mesh<type>::add(mesh_t<type> mesh)
+void mesh<type>::add(const mesh<type>* m)
 {
-    compute(booleanOperation::addition, std::move(mesh));
+    compute(booleanOperation::addition, std::unique_ptr<mesh<type>>(m->clone()));
 }
 
 template <typename type>
-void mesh<type>::sub(mesh_t<type> mesh)
+void mesh<type>::add(std::unique_ptr<mesh<type>> m)
 {
-    compute(booleanOperation::difference, std::move(mesh));
+    compute(booleanOperation::addition, std::move(m));
 }
 
 template <typename type>
-void mesh<type>::inter(mesh_t<type> mesh)
+void mesh<type>::sub(const mesh<type>* m)
 {
-    compute(booleanOperation::intersection, std::move(mesh));
+    compute(booleanOperation::difference, std::unique_ptr<mesh<type>>(m->clone()));
 }
 
 template <typename type>
-void mesh<type>::compute(booleanOperation operation, mesh_t<type> other)
+void mesh<type>::sub(std::unique_ptr<mesh<type>> m)
+{
+    compute(booleanOperation::difference, std::move(m));
+}
+
+template <typename type>
+void mesh<type>::inter(const mesh<type>* m)
+{
+    compute(booleanOperation::intersection, std::unique_ptr<mesh<type>>(m->clone()));
+}
+
+template <typename type>
+void mesh<type>::inter(std::unique_ptr<mesh<type>> m)
+{
+    compute(booleanOperation::intersection, std::move(m));
+}
+
+template <typename type>
+void mesh<type>::compute(booleanOperation operation, std::unique_ptr<mesh<type>> other)
 {
     // cut triangles
     cutMesh(other.get());
@@ -250,20 +273,50 @@ void mesh<type>::cutMesh(mesh<type>* other)
 
                 if (triangleTriangleIntersection<type>::intersects(*current, intersectionA, *otherTriangle, intersectionB))
                 {
-                    log::info << "START CUT";
-                    log::info << "triangle 1: " << *current;
-                    log::info << "triangle 2: " << *otherTriangle;
+                    log(debug) << "START CUT";
+                    log(debug) << "triangle 1: " << *current;
+                    log(debug) << "triangle 2: " << *otherTriangle;
 
                     bool cut1 = meshes[meshAIndex]->cutTriangle(current->getIndex(), intersectionA);
                     bool cut2 = meshes[meshBIndex]->cutTriangle(otherTriangle->getIndex(), intersectionB);
 
-                    log::info << "END CUT" << std::endl;
+                    log(debug) << "END CUT" << std::endl;
 
                     if (cut1 or cut2)
                     {
-                        numberOfSlices += cut1 + cut2;
-                        break;
+                        numberOfSlices++;
                     }
+
+                    // debug export
+                    #if VERBOSITY_LEVEL >= 3
+                        if (!cut1 and !cut2)
+                        {
+                            // get file index
+                            static size_t index = 0;
+                            index++;
+                            std::string scriptFilename = std::string(DEBUG_OUTPUT_DIRECTORY) + "debug" + std::to_string(index);
+
+                            // mesh 1
+                            std::string mesh1Filename = scriptFilename + "_mesh1";
+                            std::ofstream mesh1File(mesh1Filename);
+                            mesh<type> tmp1;
+                            tmp1.addTriangle(current->getSide(0).getOrigin(), current->getSide(1).getOrigin(), current->getSide(2).getOrigin());
+                            mesh1File << nlohmann::json(tmp1);
+
+                            // mesh 2
+                            std::string mesh2Filename = scriptFilename + "_mesh2";
+                            std::ofstream mesh2File(mesh2Filename);
+                            mesh<type> tmp2;
+                            tmp2.addTriangle(otherTriangle->getSide(0).getOrigin(), otherTriangle->getSide(1).getOrigin(), otherTriangle->getSide(2).getOrigin());
+                            mesh2File << nlohmann::json(tmp2);
+
+                            // script
+                            std::ofstream scriptFile(scriptFilename);
+                            scriptFile << "var mesh1 = load('" << mesh1Filename << "');" << std::endl;
+                            scriptFile << "var mesh2 = load('" << mesh2Filename << "');" << std::endl;
+                            scriptFile << "show(mesh1, color(0.8, 0.0, 0.7, 0.5))" << std::endl;
+                        }
+                    #endif
                 }
             }
         }
@@ -283,11 +336,9 @@ void mesh<type>::cutMesh(mesh<type>* other)
         }
 
         numberOfIterations++;
-
-        //if (numberOfIterations >= 3) break;
     }
 
-    log::info << "Finish cutting after " << numberOfSlices << " cuts from " << numberOfIterations << " iterations";
+    log(info) << "Finish cutting after " << numberOfSlices << " cuts from " << numberOfIterations << " iterations";
 }
 
 template <typename type>
@@ -309,7 +360,7 @@ bool mesh<type>::cutTriangle(size_t index, const std::vector<intersection<type>>
     default:
         if (!intersections.empty())
         {
-            log::err << "Bad classification, " << intersections.size() << " intersections";
+            log(warn) << "Bad classification, " << intersections.size() << " intersections";
             cut1<type>::cut(this, intersections, *triangles[index]);
             triangles[index]->setFlag(triangle<type>::invalid, true);
             return true;
@@ -334,31 +385,18 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         const auto& c = other->vertices[(*triangleA)[2]];
 
         vector3<type> center((a + b + c) / type(3));
-        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(1).getDirection()));
-        std::vector<vector3<type>> intersections;
+        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(2).getDirection()));
+        std::vector<type> intersections;
 
         for (const auto* triangleB : oldTriangles)
         {
             type t, u, v;
             auto result = triangleRayIntersection<type>::intersects(rayFromCenter, oldVertices[(*triangleB)[0]], oldVertices[(*triangleB)[1]], oldVertices[(*triangleB)[2]], t, u, v);
-            vector3<type> position = rayFromCenter.getOrigin() + rayFromCenter.getDirection() * type(t);
 
-            if (result == triangleRayIntersection<type>::inside)
+            if (result == triangleRayIntersection<type>::inside and
+                std::find_if(intersections.begin(), intersections.end(), [&t](const type& t2) { return equals(t, t2); }) == intersections.end())
             {
-                bool found = false;
-                for (const auto& intersection : intersections)
-                {
-                    if (equalsV(intersection, position))
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found)
-                {
-                    intersections.push_back(position);
-                }
+                intersections.push_back(t);
             }
         }
 
@@ -399,20 +437,17 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
 
         vector3<type> center((a + b + c) / type(3));
         ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(1).getDirection()));
-        std::vector<vector3<type>> intersections;
+        std::vector<type> intersections;
 
         for (const auto& triangleB : other->triangles)
         {
             type t, u, v;
             auto result = triangleRayIntersection<type>::intersects(rayFromCenter, other->vertices[(*triangleB)[0]], other->vertices[(*triangleB)[1]], other->vertices[(*triangleB)[2]], t, u, v);
-            vector3<type> position = rayFromCenter.getOrigin() + rayFromCenter.getDirection() * type(t);
 
-            if (result == triangleRayIntersection<type>::inside)
+            if (result == triangleRayIntersection<type>::inside and
+                std::find_if(intersections.begin(), intersections.end(), [&t](const type& t2) { return equals(t, t2); }) == intersections.end())
             {
-                if (std::find_if(intersections.begin(), intersections.end(), [&position](const vector3<type>& inter) { return equalsV(inter, position); }) == intersections.end())
-                {
-                    intersections.push_back(position);
-                }
+                intersections.push_back(t);
             }
         }
 
@@ -430,7 +465,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         case booleanOperation::difference:
             if (!inside)
             {
-                addTriangle(addVertex(c), addVertex(b), addVertex(a));
+                addTriangle(addVertex(a), addVertex(b), addVertex(c));
             }
             break;
 
@@ -448,4 +483,12 @@ template <typename type>
 void mesh<type>::refine()
 {
 
+}
+
+template <typename type>
+mesh<type>* mesh<type>::parse(nlohmann::json& j)
+{
+    auto m = new mesh<type>(j.at("triangles").size());
+    from_json(j, *m);
+    return m;
 }
