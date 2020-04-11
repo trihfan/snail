@@ -285,37 +285,35 @@ void mesh<type>::cutMesh(mesh<type>* other)
                     if (cut1 or cut2)
                     {
                         numberOfSlices++;
+                        break;
                     }
 
                     // debug export
                     #if VERBOSITY_LEVEL >= 3
-                        if (!cut1 and !cut2)
-                        {
-                            // get file index
-                            static size_t index = 0;
-                            index++;
-                            std::string scriptFilename = std::string(DEBUG_OUTPUT_DIRECTORY) + "debug" + std::to_string(index);
+                        // get file index
+                        static size_t index = 0;
+                        index++;
+                        std::string scriptFilename = std::string(DEBUG_OUTPUT_DIRECTORY) + "debug" + std::to_string(index);
 
-                            // mesh 1
-                            std::string mesh1Filename = scriptFilename + "_mesh1";
-                            std::ofstream mesh1File(mesh1Filename);
-                            mesh<type> tmp1;
-                            tmp1.addTriangle(current->getSide(0).getOrigin(), current->getSide(1).getOrigin(), current->getSide(2).getOrigin());
-                            mesh1File << nlohmann::json(tmp1);
+                        // mesh 1
+                        std::string mesh1Filename = scriptFilename + "_mesh1";
+                        std::ofstream mesh1File(mesh1Filename);
+                        mesh<type> tmp1;
+                        tmp1.addTriangle(current->getSide(0).getOrigin(), current->getSide(1).getOrigin(), current->getSide(2).getOrigin());
+                        mesh1File << nlohmann::json(tmp1);
 
-                            // mesh 2
-                            std::string mesh2Filename = scriptFilename + "_mesh2";
-                            std::ofstream mesh2File(mesh2Filename);
-                            mesh<type> tmp2;
-                            tmp2.addTriangle(otherTriangle->getSide(0).getOrigin(), otherTriangle->getSide(1).getOrigin(), otherTriangle->getSide(2).getOrigin());
-                            mesh2File << nlohmann::json(tmp2);
+                        // mesh 2
+                        std::string mesh2Filename = scriptFilename + "_mesh2";
+                        std::ofstream mesh2File(mesh2Filename);
+                        mesh<type> tmp2;
+                        tmp2.addTriangle(otherTriangle->getSide(0).getOrigin(), otherTriangle->getSide(1).getOrigin(), otherTriangle->getSide(2).getOrigin());
+                        mesh2File << nlohmann::json(tmp2);
 
-                            // script
-                            std::ofstream scriptFile(scriptFilename);
-                            scriptFile << "var mesh1 = load('" << mesh1Filename << "');" << std::endl;
-                            scriptFile << "var mesh2 = load('" << mesh2Filename << "');" << std::endl;
-                            scriptFile << "show(mesh1, color(0.8, 0.0, 0.7, 0.5))" << std::endl;
-                        }
+                        // script
+                        std::ofstream scriptFile(scriptFilename);
+                        scriptFile << "var mesh1 = load('" << mesh1Filename << "');" << std::endl;
+                        scriptFile << "var mesh2 = load('" << mesh2Filename << "');" << std::endl;
+                        scriptFile << "show(mesh1, color(0.8, 0.0, 0.7, 0.5))" << std::endl;
                     #endif
                 }
             }
