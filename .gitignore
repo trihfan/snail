@@ -2,3 +2,6 @@
 /.vscode
 CMakeLists.txt.user
 .DS_Store
+/out
+.vs/
+CMakeSettings.json

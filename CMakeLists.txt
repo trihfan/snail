@@ -5,9 +5,13 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 project(snail VERSION ${version} LANGUAGES CXX)
 enable_testing()
 
+# windows specific
+if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj /MT /NODEFAULTLIB:library")
+endif()
+
 # use C++17
 set (CMAKE_CXX_STANDARD 17)
-
 
 # options
 option(snail_build_viewer "build the included viewer, required serialize option to be ON" ON)
@@ -22,15 +26,15 @@ if (${snail_build_viewer})
 endif()
 
 # packages
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
 
 if(${snail_chai})
-    find_package(ChaiScript REQUIRED)
+    #find_package(ChaiScript CONFIG REQUIRED)
     add_definitions(-DSNAIL_CHAI)
 endif()
 
 if(${snail_json})
-    find_package(nlohmann_json REQUIRED)
+    find_package(nlohmann_json CONFIG REQUIRED)
     add_definitions(-DSNAIL_JSON)
 endif()
 

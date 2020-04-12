@@ -342,29 +342,28 @@ void mesh<type>::cutMesh(mesh<type>* other)
 template <typename type>
 bool mesh<type>::cutTriangle(size_t index, const std::vector<intersection<type>>& intersections)
 {
-    // Cut the triangle
-    switch (intersections.size())
-    {
-    case 1:
-        cut1<type>::cut(this, intersections, *triangles[index]);
-        triangles[index]->setFlag(triangle<type>::invalid, true);
-        return true;
+    size_t intersection = addVertex(intersections[0].position);
 
-    case 2:
-        cut2<type>::cut(this, intersections, *triangles[index]);
-        triangles[index]->setFlag(triangle<type>::invalid, true);
-        return true;
+    switch (intersections[0].hint)
+    {
+    case intersectionHint::ab:
+    case intersectionHint::bc:
+    case intersectionHint::ac:
+        addTriangle((*triangles[index])[(intersections[0].hint) % 3], intersection, (*triangles[index])[(2 + intersections[0].hint) % 3]);
+        addTriangle((*triangles[index])[(1 + intersections[0].hint) % 3], (*triangles[index])[(2 + intersections[0].hint) % 3], intersection);
+        break;
+
+    case intersectionHint::inside:
+        addTriangle((*triangles[index])[0], (*triangles[index])[1], intersection);
+        addTriangle((*triangles[index])[1], (*triangles[index])[2], intersection);
+        addTriangle((*triangles[index])[2], (*triangles[index])[0], intersection);
+        break;
 
     default:
-        if (!intersections.empty())
-        {
-            log(warn) << "Bad classification, " << intersections.size() << " intersections";
-            cut1<type>::cut(this, intersections, *triangles[index]);
-            triangles[index]->setFlag(triangle<type>::invalid, true);
-            return true;
-        }
-        return false;
+        assert(false);
     }
+
+    return true;
 }
 
 template <typename type>

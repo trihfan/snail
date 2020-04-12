@@ -18,6 +18,9 @@ namespace snail
     struct intersection;
 }
 
+// windows specific
+#define NOMINMAX  
+
 // std
 #include <iostream>
 #include <iomanip>
@@ -34,6 +37,7 @@ namespace snail
 #include <type_traits>
 #include <typeinfo>
 #include <filesystem>
+#include <limits>
 
 // external
 #ifdef SNAIL_JSON
@@ -59,8 +63,6 @@ namespace snail
 #include "raytracing/triangleTriangleIntersection.h"
 
 // mesh
-#include "mesh/cut1.h"
-#include "mesh/cut2.h"
 #include "mesh/indexable.h"
 #include "mesh/triangle.h"
 #include "mesh/mesh.h"
