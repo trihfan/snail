@@ -47,6 +47,12 @@ namespace snail
 
         template <typename type>
         static mesh<type>* trapezoid(const vector3<type>& position, type radius, size_t u = 20, size_t v = 20);
+
+        /**
+         *
+         */
+        template <typename type>
+        static mesh<type>* load(const std::string& filename);
 	};
 
     #include "generate.inl"

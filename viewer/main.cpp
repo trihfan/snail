@@ -14,7 +14,6 @@ void showHelp();
 int main(int argc, char* argv[])
 {
     #if VERBOSITY_LEVEL >= 3
-        std::filesystem::remove_all(std::string(DEBUG_OUTPUT_DIRECTORY));
         std::filesystem::create_directory(std::string(DEBUG_OUTPUT_DIRECTORY));
     #endif
 

@@ -16,6 +16,8 @@ chai<type>::chai()
     script.add(chaiscript::fun([](const vector3<type>& p, type r) { return generate::sphere(p, r); }), "sphere");
     script.add(chaiscript::fun([](const vector3<type>& p, type r, size_t u, size_t v) { return generate::sphere(p, r, u, v); }), "sphere");
     script.add(chaiscript::fun([](const vector3<type>& p, type h, type l) { return generate::pyramid(p, h, l); }), "pyramid");
+
+    script.add(chaiscript::fun([](const std::string& filename) { return generate::load<type>(filename); }), "load");
 }
 
 template<typename type>

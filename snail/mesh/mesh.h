@@ -77,7 +77,7 @@ namespace snail
         void compute(booleanOperation operation, std::unique_ptr<mesh<type>> other);
 
         void cutMesh(mesh<type>* other);
-        bool cutTriangle(size_t index, const std::vector<intersection<type>>& intersections);
+        bool cutTriangle(size_t index, const intersection<type>& intersection);
 
         void mergeMesh(booleanOperation operation, mesh<type>* other);
 

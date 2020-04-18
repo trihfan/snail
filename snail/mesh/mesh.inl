@@ -277,19 +277,37 @@ void mesh<type>::cutMesh(mesh<type>* other)
                     log(debug) << "triangle 1: " << *current;
                     log(debug) << "triangle 2: " << *otherTriangle;
 
-                    bool cut1 = meshes[meshAIndex]->cutTriangle(current->getIndex(), intersectionA);
-                    bool cut2 = meshes[meshBIndex]->cutTriangle(otherTriangle->getIndex(), intersectionB);
+                    bool error = false;
+                    if (!intersectionA.empty())
+                    {
+                        if (!meshes[meshAIndex]->cutTriangle(current->getIndex(), intersectionA[0]))
+                        {
+                            error = true;
+                        }
+                        else
+                        {
+                            numberOfSlices++;
+                        }
+                    }
+
+                    if (!intersectionB.empty())
+                    {
+                        if (!meshes[meshBIndex]->cutTriangle(otherTriangle->getIndex(), intersectionB[0]))
+                        {
+                            error = true;
+                        }
+                        else
+                        {
+                            numberOfSlices++;
+                        }
+                    }
 
                     log(debug) << "END CUT" << std::endl;
 
-                    if (cut1 or cut2)
-                    {
-                        numberOfSlices++;
-                        break;
-                    }
-
                     // debug export
                     #if VERBOSITY_LEVEL >= 3
+                    if (error)
+                    {
                         // get file index
                         static size_t index = 0;
                         index++;
@@ -311,10 +329,14 @@ void mesh<type>::cutMesh(mesh<type>* other)
 
                         // script
                         std::ofstream scriptFile(scriptFilename);
-                        scriptFile << "var mesh1 = load('" << mesh1Filename << "');" << std::endl;
-                        scriptFile << "var mesh2 = load('" << mesh2Filename << "');" << std::endl;
+                        scriptFile << "var mesh1 = load(\"" << mesh1Filename << "\")" << std::endl;
+                        scriptFile << "var mesh2 = load(\"" << mesh2Filename << "\")" << std::endl;
+                        scriptFile << "var mesh2.sub(mesh2)" << std::endl;
                         scriptFile << "show(mesh1, color(0.8, 0.0, 0.7, 0.5))" << std::endl;
+                    }
                     #endif
+
+                    break;
                 }
             }
         }
@@ -340,30 +362,43 @@ void mesh<type>::cutMesh(mesh<type>* other)
 }
 
 template <typename type>
-bool mesh<type>::cutTriangle(size_t index, const std::vector<intersection<type>>& intersections)
+bool mesh<type>::cutTriangle(size_t index, const intersection<type>& intersection)
 {
-    size_t intersection = addVertex(intersections[0].position);
+    const triangle<type>& cutTriangle = *triangles[index];
+    size_t newIndex = addVertex(intersection.position);
+    std::vector<size_t> newTriangles;
+    newTriangles.reserve(3);
 
-    switch (intersections[0].hint)
+    switch (intersection.hint)
     {
     case intersectionHint::ab:
     case intersectionHint::bc:
     case intersectionHint::ac:
-        addTriangle((*triangles[index])[(intersections[0].hint) % 3], intersection, (*triangles[index])[(2 + intersections[0].hint) % 3]);
-        addTriangle((*triangles[index])[(1 + intersections[0].hint) % 3], (*triangles[index])[(2 + intersections[0].hint) % 3], intersection);
+        newTriangles.push_back(addTriangle(cutTriangle[intersection.hint % 3], newIndex, cutTriangle[(2 + intersection.hint) % 3]));
+        newTriangles.push_back(addTriangle(cutTriangle[(1 + intersection.hint) % 3], cutTriangle[(2 + intersection.hint) % 3], newIndex));
         break;
 
     case intersectionHint::inside:
-        addTriangle((*triangles[index])[0], (*triangles[index])[1], intersection);
-        addTriangle((*triangles[index])[1], (*triangles[index])[2], intersection);
-        addTriangle((*triangles[index])[2], (*triangles[index])[0], intersection);
+        newTriangles.push_back(addTriangle(cutTriangle[0], cutTriangle[1], newIndex));
+        newTriangles.push_back(addTriangle(cutTriangle[1], cutTriangle[2], newIndex));
+        newTriangles.push_back(addTriangle(cutTriangle[2], cutTriangle[0], newIndex));
         break;
 
     default:
-        assert(false);
+        log(err) << "bad intersection hint";
+        break;
     }
 
-    return true;
+    triangles[index]->setFlag(triangle<type>::invalid, true);
+
+    for (size_t index : newTriangles)
+    {
+        if (index >= triangles.size())
+        {
+            return false;
+        }
+    }
+    return !newTriangles.empty();
 }
 
 template <typename type>

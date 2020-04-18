@@ -34,8 +34,8 @@ void triangleTriangleIntersection<type>::extractIntersections(const std::vector<
         if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputA.begin(), outputA.end(), [&inter](const intersection<type>& interA){ return equalsV(inter.position, interA.position, ratioEpsilon<type>()); }) == outputA.end())
         {
             outputA.push_back(inter);
-            bool uEquals0 = equals(inter.u, type(0));
-            bool vEquals0 = equals(inter.v, type(0));
+            bool uEquals0 = inter.u < ratioEpsilon<type>();
+            bool vEquals0 = inter.v < ratioEpsilon<type>();
 
             if (uEquals0 and !vEquals0)
             {
@@ -61,8 +61,8 @@ void triangleTriangleIntersection<type>::extractIntersections(const std::vector<
         if (notA(inter) and notB(inter) and notC(inter) and std::find_if(outputB.begin(), outputB.end(), [&inter](const intersection<type>& interB){ return equalsV(inter.position, interB.position, ratioEpsilon<type>()); }) == outputB.end())
         {
             outputB.push_back(inter);
-            bool uEquals0 = equals(inter.u, type(0));
-            bool vEquals0 = equals(inter.v, type(0));
+            bool uEquals0 = inter.u < ratioEpsilon<type>();
+            bool vEquals0 = inter.v < ratioEpsilon<type>();
 
             if (uEquals0 and !vEquals0)
             {

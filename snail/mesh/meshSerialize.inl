@@ -30,7 +30,7 @@ inline void from_json(const nlohmann::json& j, mesh<type>& m)
     const auto& triangles = j.at("triangles");
     for (const auto& triangle : triangles)
     {
-        m.addTriangle(triangle.at("a"), triangle.at("b"), triangle.at("c"));
+        m.addTriangle(static_cast<size_t>(triangle.at("a")), static_cast<size_t>(triangle.at("b")), static_cast<size_t>(triangle.at("c")));
     }
 }
 

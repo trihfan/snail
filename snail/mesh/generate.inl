@@ -121,3 +121,12 @@ mesh<type>* generate::tetrahedron(const vector3<type>& position, type height, ty
 
     return tetrahedron;
 }
+
+template <typename type>
+mesh<type>* generate::load(const std::string& filename)
+{
+    std::ifstream input(filename);
+    nlohmann::json json;
+    input >> json;
+    return json.get<mesh<type>*>();
+}
