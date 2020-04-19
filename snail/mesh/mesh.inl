@@ -9,10 +9,20 @@ mesh<type>::mesh(size_t reserveSize)
 template <typename type>
 mesh<type>::~mesh()
 {
+    clear();
+}
+
+template <typename type>
+void mesh<type>::clear()
+{
     for (auto t : triangles)
     {
         delete t;
     }
+
+    vertices.clear();
+    verticesMap.clear();
+    triangles.clear();
 }
 
 template <typename type>
@@ -216,7 +226,7 @@ void mesh<type>::compute(booleanOperation operation, std::unique_ptr<mesh<type>>
     mergeMesh(operation, other.get());
 
     // refine
-    //refine();
+    refine();
 }
 
 template <typename type>
@@ -402,125 +412,97 @@ bool mesh<type>::cutTriangle(size_t index, const intersection<type>& intersectio
 }
 
 template <typename type>
+bool mesh<type>::isInside(const vector3<type>& point)
+{
+    ray<type> ray(point, vector3<type>(10, 0, 0)); // todo bounds max
+    type intersection(0);
+
+    for (const auto* triangle : triangles)
+    {
+        // compute intersections
+        type t, u, v;
+        auto result = triangleRayIntersection<type>::intersects(ray, vertices[(*triangle)[0]], vertices[(*triangle)[1]], vertices[(*triangle)[2]], t, u, v);
+
+        if (result == triangleRayIntersection<type>::inside)
+        {
+            // handle intersection on vertex
+            bool uEquals0 = equals<type>(u, type(0), ratioEpsilon<type>());
+            bool uEquals1 = equals<type>(u, type(1), ratioEpsilon<type>());
+            bool vEquals0 = equals<type>(v, type(0), ratioEpsilon<type>());
+            bool vEquals1 = equals<type>(v, type(1), ratioEpsilon<type>());
+
+            bool isA = uEquals0 and vEquals0;
+            bool isB = uEquals1 and vEquals0;
+            bool isC = uEquals0 and vEquals1;
+
+            if (isA or isB or isC)
+            {
+                log(err) << "intersection on vertex unimplemented";
+            }
+            else
+            {
+                bool entering = triangle->getNormal().dot(ray.getDirection()) > type(0);
+                intersection += entering ? type(1) : type(-1);
+            }
+        }
+    }
+
+    return int(intersection) < 0;
+}
+
+template <typename type>
 void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
 {
-    auto oldVertices = std::move(vertices);
-    auto oldTriangles = std::move(triangles);
-    verticesMap.clear();
+    std::vector<std::array<vector3<type>, 3>> mergedTriangles;
+    mergedTriangles.reserve(triangles.size() + other->triangles.size());
 
-    // other
-    for (const auto* triangleA : other->triangles)
+    for (const auto& triangle : triangles)
     {
-        // Compute intersections
-        const auto& a = other->vertices[(*triangleA)[0]];
-        const auto& b = other->vertices[(*triangleA)[1]];
-        const auto& c = other->vertices[(*triangleA)[2]];
-
+        // Check if centroid is inside
+        const auto& a = vertices[(*triangle)[0]];
+        const auto& b = vertices[(*triangle)[1]];
+        const auto& c = vertices[(*triangle)[2]];
         vector3<type> center((a + b + c) / type(3));
-        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(2).getDirection()));
-        std::vector<type> intersections;
-
-        for (const auto* triangleB : oldTriangles)
-        {
-            type t, u, v;
-            auto result = triangleRayIntersection<type>::intersects(rayFromCenter, oldVertices[(*triangleB)[0]], oldVertices[(*triangleB)[1]], oldVertices[(*triangleB)[2]], t, u, v);
-
-            if (result == triangleRayIntersection<type>::inside and
-                std::find_if(intersections.begin(), intersections.end(), [&t](const type& t2) { return equals(t, t2); }) == intersections.end())
-            {
-                intersections.push_back(t);
-            }
-        }
+        bool inside = other->isInside(center);
 
         // Resolve
-        bool inside = intersections.size() % 2 == 1;
-        switch (operation)
+        if (((operation == booleanOperation::addition or operation == booleanOperation::difference) and !inside) or (operation == booleanOperation::intersection and inside))
         {
-        case booleanOperation::addition:
-            if (!inside)
-            {
-                addTriangle(addVertex(a), addVertex(b), addVertex(c));
-            }
-            break;
-
-        case booleanOperation::difference:
-            if (inside)
-            {
-                addTriangle(addVertex(c), addVertex(b), addVertex(a));
-            }
-            break;
-
-        case booleanOperation::intersection:
-            if (inside)
-            {
-                addTriangle(addVertex(a), addVertex(b), addVertex(c));
-            }
-            break;
+            mergedTriangles.push_back({ a, b, c });
         }
     }
 
-    // this
-    for (const auto& triangleA : oldTriangles)
+    for (const auto& triangle : other->triangles)
     {
-        // Compute intersections
-        const auto& a = oldVertices[(*triangleA)[0]];
-        const auto& b = oldVertices[(*triangleA)[1]];
-        const auto& c = oldVertices[(*triangleA)[2]];
-
+        // Check if centroid is inside
+        const auto& a = other->vertices[(*triangle)[0]];
+        const auto& b = other->vertices[(*triangle)[1]];
+        const auto& c = other->vertices[(*triangle)[2]];
         vector3<type> center((a + b + c) / type(3));
-        ray<type> rayFromCenter(center, center + 1000 * triangleA->getSide(0).getDirection().cross(triangleA->getSide(1).getDirection()));
-        std::vector<type> intersections;
-
-        for (const auto& triangleB : other->triangles)
-        {
-            type t, u, v;
-            auto result = triangleRayIntersection<type>::intersects(rayFromCenter, other->vertices[(*triangleB)[0]], other->vertices[(*triangleB)[1]], other->vertices[(*triangleB)[2]], t, u, v);
-
-            if (result == triangleRayIntersection<type>::inside and
-                std::find_if(intersections.begin(), intersections.end(), [&t](const type& t2) { return equals(t, t2); }) == intersections.end())
-            {
-                intersections.push_back(t);
-            }
-        }
+        bool inside = isInside(center);
 
         // Resolve
-        bool inside = intersections.size() % 2 == 1;
-        switch (operation)
+        if ((operation == booleanOperation::addition and !inside) or (operation == booleanOperation::intersection and inside))
         {
-        case booleanOperation::addition:
-            if (!inside)
-            {
-                addTriangle(addVertex(a), addVertex(b), addVertex(c));
-            }
-            break;
-
-        case booleanOperation::difference:
-            if (!inside)
-            {
-                addTriangle(addVertex(a), addVertex(b), addVertex(c));
-            }
-            break;
-
-        case booleanOperation::intersection:
-            if (inside)
-            {
-                addTriangle(addVertex(a), addVertex(b), addVertex(c));
-            }
-            break;
+            mergedTriangles.push_back({ a, b, c });
+        }
+        else if (operation == booleanOperation::difference and inside)
+        {
+            mergedTriangles.push_back({ c, b, a });
         }
     }
+
+    clear();
+
+    for (const auto& triangle : mergedTriangles)
+    {
+        addTriangle(triangle[0], triangle[1], triangle[2]);
+    }
+
 }
 
 template <typename type>
 void mesh<type>::refine()
 {
 
-}
-
-template <typename type>
-mesh<type>* mesh<type>::parse(nlohmann::json& j)
-{
-    auto m = new mesh<type>(j.at("triangles").size());
-    from_json(j, *m);
-    return m;
 }

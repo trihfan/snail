@@ -21,6 +21,8 @@ namespace snail
 
         virtual ~mesh();
 
+        void clear();
+
         /**
          * @brief Return a clone of the current mesh
          */
@@ -41,6 +43,10 @@ namespace snail
         size_t getTriangleCount() const;
         const triangle<type>& getTriangle(size_t index) const;
 
+        // intersection
+        //const bounds<type>& getBounds() const;
+        bool isInside(const vector3<type>& point);
+
         // boolean operations
         void add(const mesh<type>* mesh);
         void add(std::unique_ptr<mesh<type>> mesh);
@@ -50,8 +56,6 @@ namespace snail
 
         void inter(const mesh<type>* mesh);
         void inter(std::unique_ptr<mesh<type>> mesh);
-
-        static mesh<type>* parse(nlohmann::json& j);
 
 	private:
         /**

@@ -54,6 +54,8 @@ namespace snail
 
         const type& getArea() const;
 
+        const vector3<type> getNormal() const;
+
     private:
         /**
          * @brief The triangle indices
@@ -72,6 +74,7 @@ namespace snail
 
         size_t id;
         type area;
+        vector3<type> normal;
     };
 
     #include "triangle.inl"

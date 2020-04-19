@@ -14,6 +14,8 @@ triangle<type>::triangle(size_t a, size_t b, size_t c, const ray<type>& ab, cons
     {
         log(err) << "triangle area is null";
     }
+
+    normal = ab.getDirection().cross(ca.getDirection());
 }
 
 template <typename type>
@@ -62,4 +64,10 @@ template <typename type>
 const type& triangle<type>::getArea() const
 {
     return area;
+}
+
+template <typename type>
+const vector3<type> triangle<type>::getNormal() const
+{
+    return normal;
 }
