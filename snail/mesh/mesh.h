@@ -45,7 +45,7 @@ namespace snail
 
         // intersection
         //const bounds<type>& getBounds() const;
-        bool isInside(const vector3<type>& point);
+        bool isInside(const vector3<type>& point, bool onSideEqualInside);
 
         // boolean operations
         void add(const mesh<type>* mesh);

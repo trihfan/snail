@@ -412,7 +412,7 @@ bool mesh<type>::cutTriangle(size_t index, const intersection<type>& intersectio
 }
 
 template <typename type>
-bool mesh<type>::isInside(const vector3<type>& point)
+bool mesh<type>::isInside(const vector3<type>& point, bool onSideEqualInside)
 {
     ray<type> ray(point, vector3<type>(10, 0, 0)); // todo bounds max
     type intersection(0);
@@ -425,6 +425,18 @@ bool mesh<type>::isInside(const vector3<type>& point)
 
         if (result == triangleRayIntersection<type>::inside)
         {
+            if (t <= ratioEpsilon<type>())
+            {
+                if (onSideEqualInside)
+                {
+                    return true;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
             // handle intersection on vertex
             bool uEquals0 = equals<type>(u, type(0), ratioEpsilon<type>());
             bool uEquals1 = equals<type>(u, type(1), ratioEpsilon<type>());
@@ -463,7 +475,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         const auto& b = vertices[(*triangle)[1]];
         const auto& c = vertices[(*triangle)[2]];
         vector3<type> center((a + b + c) / type(3));
-        bool inside = other->isInside(center);
+        bool inside = other->isInside(center, true);
 
         // Resolve
         if (((operation == booleanOperation::addition or operation == booleanOperation::difference) and !inside) or (operation == booleanOperation::intersection and inside))
@@ -479,7 +491,7 @@ void mesh<type>::mergeMesh(booleanOperation operation, mesh<type>* other)
         const auto& b = other->vertices[(*triangle)[1]];
         const auto& c = other->vertices[(*triangle)[2]];
         vector3<type> center((a + b + c) / type(3));
-        bool inside = isInside(center);
+        bool inside = isInside(center, false);
 
         // Resolve
         if ((operation == booleanOperation::addition and !inside) or (operation == booleanOperation::intersection and inside))
